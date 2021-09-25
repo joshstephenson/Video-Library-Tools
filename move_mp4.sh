@@ -1,35 +1,11 @@
 #!/usr/bin/env bash
 
-echo "Preparing to Move and Import"
-
-command=$(which mv)
-if [ ! -f "$command" ]
-then
-  echo "No command found"
-  exit 1
-fi
-
-# The file to re-encode
-filename=$1
-directory=$2
-
-if [ -z "$1" ]
-then
-  echo "You must specify a file to encode"
-  exit 1
-else
-  if [ -z "$2" ]
-  then
-    echo "You must specify a target directory"
-    exit 1
-  fi
-fi
-
 # Takes a filename (mp4 file)
-#  imports it into iTunes using the `open` command
-#  waits 2 seconds for the import to complete
-#  Then pauses iTunes which will start playing the file by default
-#  NOTE: This is only meant to work when iTunes>>Preferences>>Advanced>>'Copy files to iTunes Media folder when adding to library' is NOT checked. If this is checked then you'll want to increase the sleep period appropriate for your system's CPU power
+#   imports it into iTunes using the `open` command
+#   waits 2 seconds for the import to complete
+#   Then pauses iTunes which will start playing the file by default
+#   NOTE: This is only meant to work when TV.app>>Preferences>>Files>>'Copy files to Media folder when adding to Library' is NOT checked. If this is checked then you'll want to increase the sleep period appropriate for your system's CPU power
+
 import(){
   echo "Importing '$1' into iTunes"
   open "$1"
@@ -91,6 +67,32 @@ move_file(){
     fi
   fi
 }
+
+echo "Preparing to Move and Import"
+
+command=$(which mv)
+if [ ! -f "$command" ]
+then
+  echo "No command found"
+  exit 1
+fi
+
+# The file to re-encode
+filename=$1
+directory=$2
+
+if [ -z "$1" ]
+then
+  echo "You must specify a file to encode"
+  exit 1
+else
+  if [ -z "$2" ]
+  then
+    echo "You must specify a target directory"
+    exit 1
+  fi
+fi
+
 
 is_sample=$(echo "$filename" | grep -i 'sample')
 

@@ -1,42 +1,17 @@
 #!/usr/bin/env bash
 
-echo "Preparing to Encode"
-
-command=$(which HandBrakeCLI)
-if [ ! -f "$command" ]
-then
-  echo "No HandBrakeCLI command found"
-  exit 1
-fi
-arguments="-e x264 -q 20 -B 160"
-
-# The file to re-encode
-filename=$1
-directory=$2
-
-if [ -z "$1" ]
-then
-  echo "You must specify a file to encode"
-  exit 1
-else
-  if [ -z "$2" ]
-  then
-    echo "You must specify a target directory"
-    exit 1
-  fi
-fi
-
 # Takes a filename (mp4 file)
-#  imports it into iTunes using the `open` command
+#  imports it into TV.app using the `open` command
+#  Assumes TV.app is the default file type for MP4 files
 #  waits 2 seconds for the import to complete
-#  Then pauses iTunes which will start playing the file by default
-#  NOTE: This is only meant to work when iTunes>>Preferences>>Advanced>>'Copy files to iTunes Media folder when adding to library' is NOT checked. If this is checked then you'll want to increase the sleep period appropriate for your system's CPU power
+#  Then pauses TV.app which will start playing by default
+#  NOTE: This is only meant to work when TV>>Preferences>>Files>>'Copy files to Media folder when adding to Library' is NOT checked. If this is checked then you'll want to increase the sleep period appropriate for your system's speed
 import(){
-  echo "Importing '$1' into iTunes"
+  echo "Importing '$1' into TV"
   open "$1"
   sleep 2
-  # Pause iTunes
-  osascript -e 'tell application "iTunes"
+  # Pause TV.app
+  osascript -e 'tell application "TV"
 pause
 end tell' > /dev/null 2>&1
   sleep 1
@@ -84,13 +59,39 @@ encode_file(){
     then
       import "$newfilename"
       echo "successfully encoded $newfilename :)"
-      echo "Waiting 5 minutes before continuing. Good CPU :)"
+      echo "Waiting 5 minutes before continuing to be nice to hardware."
       sleep 300
     else
       echo "failed encoding $newfilename :("
     fi
   fi
 }
+
+echo "Preparing to Encode"
+
+command=$(which HandBrakeCLI)
+if [ ! -f "$command" ]
+then
+  echo "No HandBrakeCLI command found"
+  exit 1
+fi
+arguments="-e x264 -q 20 -B 160"
+
+# The file to re-encode
+filename=$1
+directory=$2
+
+if [ -z "$1" ]
+then
+  echo "You must specify a file to encode"
+  exit 1
+else
+  if [ -z "$2" ]
+  then
+    echo "You must specify a target directory"
+    exit 1
+  fi
+fi
 
 is_sample=$(echo "$filename" | grep -i 'sample')
 
@@ -100,4 +101,4 @@ then
 else
   encode_file "$filename"
 fi
-echo ""
+
