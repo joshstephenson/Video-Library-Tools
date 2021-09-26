@@ -121,7 +121,7 @@ encode_file(){
     cleanup "$1"
   else
     subtitles="$(find "$(dirname "$1")" -name "*.srt" )"
-    if [ -n "$subtitles"]
+    if [ -n "$subtitles" ]
     then
       echo "SUBTITLES Found: $subtitles"
       subtitles="-s $subtitles"
