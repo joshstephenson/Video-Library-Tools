@@ -27,9 +27,8 @@ Any files ending in avi, mkv, m4v, mpeg or divx will be converted to mp4. If you
 
 This file will:
 1. Check extension. If it's already an MP4 it will skip the following step.
-2. Use HandBrakeCLI to encode the file with output as the destination directory specified above. Destination folder will be passed from `video_library_encoder.sh` to this if you don't run it directly.
-3. Subtitles will be moved to target directory as well
-4. Original file and or it's parent directory (if the video file was found inside a subdirectory of the source folder) will be moved to Trash.
+2. If not in MP4, use HandBrakeCLI to encode the file with output as the destination directory specified above. Destination folder will be passed from `video_library_encoder.sh` to this if you don't run it directly. Subtitles will be used if found in same directory.
+3. Original file and or it's parent directory (if the video file was found inside a subdirectory of the source folder) will be moved to Trash.
 
 This has good BASH scripting practices like checking for existence of files, directories and formatting file names and directory names properly before attempting to access.
 
