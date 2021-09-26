@@ -28,9 +28,6 @@ echo "Looking for video files in $1"
 # Find non-mp4 video files in the directory passed via command line.
 # For each file, encode it
 
-# find $source_dir \( -name "*mp4" \) -exec \
-# $move {} "$target_dir" \;
-
-find $source_dir \( -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) -exec \
-$encode {} "$target_dir" \;
+find $source_dir \( -name "*mp4" -o -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) -exec \
+$encode {} "$target_dir" "$source_dir" \;
 
