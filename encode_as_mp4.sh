@@ -8,11 +8,13 @@ cleanup(){
     if [ "$source_dir" == "$directory" ]
     then
         echo "Removing file only: $1"
-        $remove_command "$1"
+        file=$1
     else
         echo "Removing original file and directory: $directory"
-        $remove_command -r "$directory"
+        file=$directory
     fi
+    arguments="-fv"
+    $move_command $arguments "$file" ~/.Trash/
 }
 
 # Takes a filename (mp4 file)
@@ -29,7 +31,6 @@ import(){
   osascript -e 'tell application "TV"
 pause
 end tell' > /dev/null 2>&1
-  cleanup "$1"
   echo "successfully imported $(basename "$1") :)"
   sleep 1
 }
@@ -82,6 +83,7 @@ move_file(){
     if [ -f "$newfilename" ]
     then
       import "$newfilename"
+      cleanup "$1"
     else
       echo "failed moving $newfilename :("
     fi
@@ -125,10 +127,11 @@ encode_file(){
       subtitles="-s $subtitles"
     fi
     echo "Encoding $newfilename"
-    $handbrake -i "$1" -o "$newfilename" $arguments "$subtitles"
+    $handbrake -i "$1" -o "$newfilename" $arguments "$subtitles" 1> /dev/null 2>&1
     if [ -f "$newfilename" ]
     then
       import "$newfilename"
+      cleanup "$1"
       echo "Waiting 5 minutes before continuing."
       sleep 300
     else
@@ -151,13 +154,6 @@ move_command=$(which mv)
 if [ ! -f "$move_command" ]
 then
   echo "No mv command found"
-  exit 1
-fi
-
-remove_command=$(which rm)
-if [ ! -f "$remove_command" ]
-then
-  echo "No rm command found"
   exit 1
 fi
 
