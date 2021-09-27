@@ -128,14 +128,17 @@ encode_file(){
     fi
     echo "Encoding $newfilename"
     $handbrake -i "$1" -o "$newfilename" $arguments "$subtitles" 1> /dev/null 2>&1
-    if [ -f "$newfilename" ]
+
+    # Check that handbrake didn't return an error and the newfile exists
+    if i[ $? == 0 -a -f "$newfilename" ]
     then
       import "$newfilename"
       cleanup "$1"
       echo "Waiting 5 minutes before continuing."
       sleep 300
     else
-      echo "failed encoding $newfilename :("
+      echo "Failed encoding $newfilename :(" >&2
+      exit 1
     fi
   fi
 }
