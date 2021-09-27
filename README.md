@@ -18,6 +18,32 @@ Then you can run it like this:
 
 `./video_library_encoder.sh [Source folder] [Destination folder]`
 
+However, if you want to automate this script to run any time a new file is added to your movie folder, do this:
+1. Open Automator.app
+2. File >> New >> Folder Action
+3. Drag "Run Shell Script" to the right hand pane (see "Drag actions or files here to build your workflow.")
+4. Choose the folder where you download your (totally legitimately purchased) videos.
+5. Paste the recipe below, making sure to modify the first 4 configuration variables if necessary
+
+```
+#################################################################
+# Configuration Variables
+#################################################################
+PATH=$PATH:/usr/local/bin                        # This is the directory where you installed HandBrakeCLI
+UNCONVERTED=~/Movies/Unconverted                    # This is where your avi, mkv and other non-mp4 files are
+CONVERTED=~/Movies/Converted                        # This is where you want your mp4 files to go. Don't use a subdirectory of the above
+PROJECT_PATH=~/Projects/Video-Library-Tools         # This is where you cloned this repository
+
+#################################################################
+# Internal - You shouldn't need to change these, but feel free to
+#################################################################
+ENCODER="$PROJECT_PATH/video_library_encoder.sh" 
+LOGFILE="$PROJECT_PATH/log.txt"
+echo "" >> $LOGFILE
+echo $(date) >> $LOGFILE
+$ENCODER $UNCONVERTED $CONVERTED >> $LOGFILE
+```
+
 #### What it Does
 Any files ending in `avi`, `mkv`, `m4v`, `mpeg` or `divx` will be converted to `mp4`. If you need to add other extensions, add them to the second to last line of this file.
 
@@ -38,7 +64,7 @@ This file shows good BASH scripting practices like:
 This file will:
 1. Check video's extension. If it's already an MP4 it will skip the following step.
 2. If not in MP4, it will use HandBrakeCLI to encode the file as MP4. Destination folder will be passed from `video_library_encoder.sh` to this if you don't run it directly. Subtitles will be used if found in same directory.
-3. Original file and or it's parent directory (if the video file was found inside a subdirectory of the source folder) will be moved to Trash.
+3. Original file (and it's parent directory if the video file was found inside a subdirectory of the source folder) will be moved to Trash.
 
 This file shows good BASH scripting practices like:
 - sanitizing directory names
