@@ -64,7 +64,7 @@ This file shows good BASH scripting practices like:
 This file will:
 1. Check video's extension. If it's already an MP4 it will skip the following step.
 2. If not in MP4, it will use HandBrakeCLI to encode the file as MP4. Destination folder will be passed from `video_library_encoder.sh` to this if you don't run it directly. Subtitles will be used if found in same directory.
-3. Original file and or it's parent directory (if the video file was found inside a subdirectory of the source folder) will be moved to Trash.
+3. Original file (and it's parent directory if the video file was found inside a subdirectory of the source folder) will be moved to Trash.
 
 This file shows good BASH scripting practices like:
 - sanitizing directory names
