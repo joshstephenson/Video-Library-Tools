@@ -22,6 +22,12 @@ then
   usage
 fi
 
+trailing_slash=$(echo "$source_dir" | egrep "/$")
+if [ -z "$trailing_slash" ]
+then
+source_dir="$source_dir/"
+fi
+
 echo "Looking for video files in $1"
 
 # Find video files in the directory passed via command line.

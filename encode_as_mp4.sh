@@ -63,12 +63,8 @@ move_file(){
   if [ -f "$newfilename" ]
   then
     echo "$newfilename already exists."
-    remove_flag=$(echo "$2" | grep "-x")
-    if [ -n "$remove_flag" ]
-    then
-        echo "TESTING: Removing original file: $1"
-        # $remove_command "$1"
-    fi
+    import "$newfilename"
+    cleanup "$1"
   else
     echo "about to move"
 
@@ -98,12 +94,10 @@ encode_file(){
     echo "You must provide a filename to encode_file()"
     exit 1
   fi
-  echo "Encoding file: $1"
 
   trailing_slash=$(echo "$directory" | egrep "/$")
   if [ -z "$trailing_slash" ]
   then
-    echo "adding trailing slash"
     directory="$directory/"
   fi
 
@@ -130,12 +124,11 @@ encode_file(){
     $handbrake -i "$1" -o "$newfilename" $arguments "$subtitles" 1> /dev/null 2>&1
 
     # Check that handbrake didn't return an error and the newfile exists
-    if i[ $? == 0 -a -f "$newfilename" ]
+    if [ $? == 0 -a -f "$newfilename" ]
     then
       import "$newfilename"
       cleanup "$1"
-      echo "Waiting 5 minutes before continuing."
-      sleep 300
+      sleep 5
     else
       echo "Failed encoding $newfilename :(" >&2
       exit 1
