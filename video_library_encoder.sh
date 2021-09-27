@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+dir="$(dirname ${BASH_SOURCE[0]})"
 encode="$dir/encode_as_mp4.sh"
 move="$dir/move_mp4.sh"
 

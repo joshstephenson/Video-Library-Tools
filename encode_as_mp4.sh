@@ -103,7 +103,7 @@ encode_file(){
   trailing_slash=$(echo "$directory" | egrep "/$")
   if [ -z "$trailing_slash" ]
   then
-    echo "needs trailing slash"
+    echo "adding trailing slash"
     directory="$directory/"
   fi
 
@@ -165,15 +165,18 @@ filename=$1
 directory=$2
 source_dir=$3
 
+usage() {
+  echo "$0 [Video File] [Destination Folder]"
+  exit 1
+}
+
 if [ -z "$1" ]
 then
-  echo "You must specify a file to encode"
-  exit 1
+    usage
 else
   if [ -z "$2" ]
   then
-    echo "You must specify a target directory"
-    exit 1
+    usage
   fi
 fi
 
