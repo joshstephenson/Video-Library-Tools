@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Change this to true if you only want to mv files that are already mp4 files
+# Leaving this as false will re-encode them when subtitles are found
+FORCE_ENCODE=false
+
 # Cleans up original if already encoded
 cleanup(){
     directory="$(dirname "$1")/"
@@ -37,52 +41,17 @@ end tell' > /dev/null 2>&1
 
 # Moves MP4 file passed into this script to target dir
 move_file(){
-  if [ -z "$1" ]
-  then
-    echo "You must provide a filename to encode_file()"
-    exit 1
-  fi
-  echo "Encoding file: $1"
+  filename="$1"
+  newfilename="$2"
+  echo "here: $newfilename"
 
-  # Add trailing slash to directory if necessary
-  trailing_slash=$(echo "$directory" | egrep "/$")
-  if [ -z "$trailing_slash" ]
-  then
-    directory="$directory/"
-  fi
-
-  # strip the directory, leaving just the filename
-  short_file="$(basename "$1")"
-
-  # strip extension and replace with mp4
-  short_file="${short_file%.*}.mp4"
-
-  newfilename="$directory$short_file"
-
-  echo "Moving $newfilename"
+  $move_command "$filename" "$newfilename"
   if [ -f "$newfilename" ]
   then
-    echo "$newfilename already exists."
     import "$newfilename"
-    cleanup "$1"
+    cleanup "$filename"
   else
-    echo "about to move"
-
-    # looking for subtitles
-    subtitles="$(find "$(dirname "$1")" -name "*.srt" )"
-    if [ -n "$subtitles" ]
-    then
-      echo "Subtitles Found: $subtitles"
-      $move_command "$subtitles" "$directory"
-    fi
-    $move_command "$1" "$newfilename"
-    if [ -f "$newfilename" ]
-    then
-      import "$newfilename"
-      cleanup "$1"
-    else
-      echo "failed moving $newfilename :("
-    fi
+    echo "failed moving $newfilename :("
   fi
 }
 
@@ -108,30 +77,41 @@ encode_file(){
   short_file="${short_file%.*}.mp4"
 
   newfilename="$directory$short_file"
+  echo "new: $newfilename"
 
   if [ -f "$newfilename" ]
   then
     echo "$newfilename already exists. Removing original."
     cleanup "$1"
   else
-    subtitles="$(find "$(dirname "$1")" -name "*.srt" )"
+    subtitles="$(find "$(dirname "$1")" -name "*.srt" | paste -sd "," - )"
     if [ -n "$subtitles" ]
     then
       echo "SUBTITLES Found: $subtitles"
-      subtitles="-s $subtitles"
+      subtitles="--srt-file $subtitles"
     fi
-    echo "Encoding $newfilename"
-    $handbrake -i "$1" -o "$newfilename" $arguments "$subtitles" 1> /dev/null 2>&1
 
-    # Check that handbrake didn't return an error and the newfile exists
-    if [ $? == 0 -a -f "$newfilename" ]
+    # if this is already an mp4 file but we have subtitles, we will re-encode to include the subs
+    is_mp4=$(echo "$filename" | egrep '/*mp4$')
+    if [ -n "$is_mp4" -a -z "$subtitles" ]
     then
-      import "$newfilename"
-      cleanup "$1"
-      sleep 5
+      move_file "$filename" "$newfilename"
     else
-      echo "Failed encoding $newfilename :(" >&2
-      exit 1
+      echo "Encoding $newfilename"
+      echo "subtitles: $subtitles"
+      arguments="-e x264 -q 20 -B 160"
+      $handbrake -i "$1" -o "$newfilename" $arguments "\"$subtitles\"" # 1> /dev/null 2>&1
+
+      # Check that handbrake didn't return an error and the newfile exists
+      if [ $? == 0 -a -f "$newfilename" ]
+      then
+        import "$newfilename"
+        cleanup "$1"
+        sleep 5
+      else
+        echo "Failed encoding $newfilename :(" >&2
+        exit 1
+      fi
     fi
   fi
 }
@@ -144,7 +124,6 @@ then
   echo "No HandBrakeCLI command found"
   exit 1
 fi
-arguments="-e x264 -q 20 -B 160"
 
 move_command=$(which mv)
 if [ ! -f "$move_command" ]
@@ -179,12 +158,6 @@ if [ -n "$is_sample" ]
 then
   echo "Skipping sample file: $filename"
 else
-  is_mp4=$(echo "$filename" | grep -i '*mp4')
-  if [ -n "$is_mp4" ]
-  then
-    move_file "$filename"
-  else
-    encode_file "$filename"
-  fi
+  encode_file "$filename"
 fi
 
