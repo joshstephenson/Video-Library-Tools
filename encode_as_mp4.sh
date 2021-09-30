@@ -85,22 +85,27 @@ encode_file(){
     cleanup "$1"
   else
     subtitles="$(find "$(dirname "$1")" -name "*.srt" | paste -sd "," - )"
-    if [ -n "$subtitles" ]
-    then
-      echo "SUBTITLES Found: $subtitles"
-      subtitles="--srt-file $subtitles"
-    fi
 
-    # if this is already an mp4 file but we have subtitles, we will re-encode to include the subs
+    # if this is already an mp4 and we don't have subtitles, then just move the file
     is_mp4=$(echo "$filename" | egrep '/*mp4$')
     if [ -n "$is_mp4" -a -z "$subtitles" ]
     then
       move_file "$filename" "$newfilename"
+
+    # Otherwise let's encode it and include the subtitles
     else
       echo "Encoding $newfilename"
-      echo "subtitles: $subtitles"
+
+    # Look for subtitles
       arguments="-e x264 -q 20 -B 160"
-      $handbrake -i "$1" -o "$newfilename" $arguments "\"$subtitles\"" # 1> /dev/null 2>&1
+
+      if [ -n "$subtitles" ]
+      then
+        echo "Subtitles found"
+        $handbrake -i "$1" -o "$newfilename" $arguments --srt-file "$subtitles" # 1> /dev/null 2>&1
+      else
+        $handbrake -i "$1" -o "$newfilename" $arguments # 1> /dev/null 2>&1
+      fi
 
       # Check that handbrake didn't return an error and the newfile exists
       if [ $? == 0 -a -f "$newfilename" ]
@@ -115,8 +120,6 @@ encode_file(){
     fi
   fi
 }
-
-echo "Preparing to Encode"
 
 handbrake=$(which HandBrakeCLI)
 if [ ! -f "$handbrake" ]
@@ -151,6 +154,8 @@ else
     usage
   fi
 fi
+
+echo "Preparing to Encode"
 
 is_sample=$(echo "$filename" | grep -i 'sample')
 
