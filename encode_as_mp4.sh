@@ -102,9 +102,9 @@ encode_file(){
       if [ -n "$subtitles" ]
       then
         echo "Subtitles found"
-        $handbrake -i "$1" -o "$newfilename" $arguments --srt-file "$subtitles" # 1> /dev/null 2>&1
+        $handbrake -i "$1" -o "$newfilename" $arguments --srt-file "$subtitles" 1> /dev/null 2>&1
       else
-        $handbrake -i "$1" -o "$newfilename" $arguments # 1> /dev/null 2>&1
+        $handbrake -i "$1" -o "$newfilename" $arguments 1> /dev/null 2>&1
       fi
 
       # Check that handbrake didn't return an error and the newfile exists
