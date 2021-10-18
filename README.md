@@ -6,7 +6,7 @@ BASH shell scripts to encode non-MP4 files as MP4 suitable for Mac and Apple TV 
 - HandBrakeCLI via [HandBrake.fr](https://handbrake.fr/downloads2.php) (You'll want to copy this to a bin directory, probably `/usr/local/bin` but as long as it's in your path encode_as_mp4.sh will find it.
 
 ### Optional Notifications via Messages
-If you want to receive a message on your iPhone, iPad or Mac (Messages), add a file to the same directory called "whom_to_notify" and put the phone number, email address in it. Example:
+If you want to receive a message on your iPhone, iPad or Mac (Messages), add a file to the same directory called "whom_to_notify.txt" and put the phone number or email address in it. Example:
 
 ```
 +12125551234
