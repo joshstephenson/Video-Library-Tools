@@ -5,6 +5,14 @@ BASH shell scripts to encode non-MP4 files as MP4 suitable for Mac and Apple TV 
 - BASH and Mac OS
 - HandBrakeCLI via [HandBrake.fr](https://handbrake.fr/downloads2.php) (You'll want to copy this to a bin directory, probably `/usr/local/bin` but as long as it's in your path encode_as_mp4.sh will find it.
 
+### Optional Notifications via Messages
+If you want to receive a message on your iPhone, iPad or Mac (Messages), add a file to the same directory called "whom_to_notify" and put the phone number, email address in it. Example:
+
+```
++12125551234
+```
+If this file is found in the same directory as the scripts, it will send a message when each video is encoded. Otherwise it will skip this step.
+
 ### Main File (run this file directly)
 
 [video_library_encoder.sh](video_library_encoder.sh)
