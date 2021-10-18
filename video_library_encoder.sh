@@ -31,7 +31,7 @@ fi
 echo "Looking for video files in $1"
 
 # First check to see if HandBrake is running already
-if [ $(ps | grep HandBrakeCLI | egrep -v grep | wc -l) -gt 0 ]
+if [ $(ps ax | grep HandBrakeCLI | egrep -v grep | wc -l) -gt 0 ]
 then
     echo "HandBrakeCLI is already running. Aborting."
     exit 0
