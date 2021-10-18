@@ -18,19 +18,8 @@ notify() {
 
 # Cleans up original if already encoded
 cleanup(){
-    directory="$(dirname "$1")/"
-    echo "DIRECTORY: $directory"
-    echo "SOURCE: $source_dir"
-    if [ "$source_dir" == "$directory" ]
-    then
-        echo "Removing file only: $1"
-        file=$1
-    else
-        echo "Removing original file and directory: $directory"
-        file=$directory
-    fi
     arguments="-fv"
-    $move_command $arguments "$file" ~/.Trash/
+    $move_command $arguments "$1" ~/.Trash/
 }
 
 # Takes a filename (mp4 file)
