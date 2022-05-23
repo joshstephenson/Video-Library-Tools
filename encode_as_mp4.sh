@@ -3,7 +3,8 @@
 # Change this to true if you only want to mv files that are already mp4 files
 # Leaving this as false will re-encode them when subtitles are found
 FORCE_ENCODE=false
-RECIPIENT=$(cat whom_to_notify.txt)
+DIR="$(dirname ${BASH_SOURCE[0]})"
+RECIPIENT=$(cat "$DIR/whom_to_notify.txt")
 
 notify() {
 # Don't attempt to notify anyone if a `whom_to_notify.txt` file is not present

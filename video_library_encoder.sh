@@ -41,6 +41,6 @@ fi
 # Find video files in the directory passed via command line.
 # For each file, encode it
 
-find $source_dir \( -name "*mp4" -o -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) -exec \
+find -s $source_dir \( -name "*mp4" -o -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) -exec \
 $encode {} "$target_dir" "$source_dir" \;
 
