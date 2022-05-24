@@ -32,6 +32,7 @@ fi
 echo "Looking for video files in $1"
 
 # First check to see if HandBrake is running already
+# Due to HandBrake's system load, it's best not to run in parallel
 if [ $(ps ax | grep $handbrake | egrep -v grep | wc -l) -gt 0 ]
 then
     echo "HandBrakeCLI is already running. Aborting."
@@ -40,7 +41,14 @@ fi
 
 # Find video files in the directory passed via command line.
 # For each file, encode it
+while [ $(find -s $source_dir \( -name "*mp4" -o -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) | wc -l) -gt 0 ]
+do
+    first=$(find -s $source_dir \( -name "*mp4" -o -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) | head -1)
+    $encode "$first" "$target_dir"
+done
 
-find -s $source_dir \( -name "*mp4" -o -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) -exec \
-$encode {} "$target_dir" "$source_dir" \;
+# Old meth of using find -exec directly did not pick up new files when adding during batch execution
+# Above method of using while loop is superior for that purpose
+#find -s $source_dir \( -name "*mp4" -o -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) -exec \
+#$encode {} "$target_dir" "$source_dir" \;
 
