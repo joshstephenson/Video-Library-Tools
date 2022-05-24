@@ -141,7 +141,6 @@ fi
 # The file to re-encode
 filename=$1
 directory=$2
-source_dir=$3
 
 usage() {
   echo "$0 [Video File] [Destination Folder]"
