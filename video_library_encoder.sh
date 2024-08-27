@@ -2,7 +2,7 @@
 
 dir="$(dirname "${BASH_SOURCE[0]}")"
 encode="$dir/encode_as_mp4.sh"
-handbrake=$(which HandBrakeCLIA)
+handbrake=$(which HandBrakeCLI)
 if [ -z "$handbrake" ]; then
     echo -e "\
 
