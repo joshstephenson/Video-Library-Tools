@@ -39,5 +39,4 @@ while [ "$(find -s "$source_dir" \( -name "*mp4" -o -name "*avi" -o -name "*mkv"
 do
     first=$(find -s "$source_dir" \( -name "*mp4" -o -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) | head -1)
     $encode "$first" "$target_dir"
-    exit 1
 done
