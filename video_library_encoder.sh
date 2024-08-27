@@ -2,7 +2,17 @@
 
 dir="$(dirname "${BASH_SOURCE[0]}")"
 encode="$dir/encode_as_mp4.sh"
-handbrake=$(which HandBrakeCLI)
+handbrake=$(which HandBrakeCLIA)
+if [ -z "$handbrake" ]; then
+    echo -e "\
+
+You must install HandBrake and HandBrakeCLI for this script to work.
+
+HandBrake: https://handbrake.fr/downloads.php
+HandBrakeCLI: https://handbrake.fr/downloads2.php
+"
+    exit 1
+fi
 
 source_dir="$1"
 target_dir="$2"
