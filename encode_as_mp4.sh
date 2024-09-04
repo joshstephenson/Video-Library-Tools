@@ -90,14 +90,25 @@ encode_file(){
         subtitles=$(find "$(dirname "$1")" -name "*.srt" | paste -sd "," - )
 
         # if this is already an mp4 and we don't have subtitles, then just move the file
-        is_mp4=$(echo "$filename" | grep -E '/*mp4$')
+        is_mp4=$(echo "$filename" | grep -iE '/*mp4$')
+        is_mkv=$(echo "$filename" | grep -iE '/*mkv$')
         if [ -n "$is_mp4" ] && [ -z "$subtitles" ]
         then
             move_file "$filename" "$new_filename"
         else # Otherwise let's encode it and include the subtitles
             echo "Encoding $new_filename"
 
-            arguments="-e x264 -q 20 -B 160"
+            # -e: Video encoder x264
+            # -q: Video quality. 22 seems to be typical
+            # -B: Audio Bitrate
+            # -E: pass through audio
+            if [ -n "$is_mkv" ]
+            then
+                # MKV files tend to have bad audio
+                arguments="-e x264 --gain 13"
+            else
+                arguments="-e x264 --aencoder copy:aac"
+            fi
             if [ -n "$subtitles" ]
             then
                 # Get the names of the subtitles from the names of the files
@@ -111,10 +122,11 @@ encode_file(){
                         echo "LANGS: ${langs}"
                     fi
                 done
-                $handbrake -i "${1}" -o "${new_filename}" -e x264 -q 20 -B 160 --srt-file "${subtitles}" --srt-lang "${langs}" #1> /dev/null 2>&1
+                $handbrake -i "${1}" -o "${new_filename}" -e x264 --aencoder copy:aac --srt-file "${subtitles}" --srt-lang "${langs}" #1> /dev/null 2>&1
             else
-                $handbrake -i "${1}" -o "${new_filename}" -e x264 -q 20 -B 160 #1> /dev/null 2>&1
+                $handbrake -i "${1}" -o "${new_filename}" "${arguments}" #1> /dev/null 2>&1
             fi
+            exit 1
 
             # Check that handbrake didn't return an error and the newfile exists
             if [ $? == 0 ]  && [ -f "$new_filename" ]
@@ -154,17 +166,10 @@ usage() {
     exit 1
 }
 
-if [ -z "$1" ]
+if [ -z "$1" ] || [ -z "$2" ]
 then
-        usage
-else
-    if [ -z "$2" ]
-    then
-        usage
-    fi
+    usage
 fi
-
-echo "Preparing to Encode"
 
 is_sample=$(echo "$filename" | grep -i 'sample')
 
