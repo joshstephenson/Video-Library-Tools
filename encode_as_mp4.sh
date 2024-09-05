@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Change this to true if you only want to mv files that are already mp4 files
-# Leaving this as false will re-encode them when subtitles are found
+# Leaving this as false will re-encode them when SUBTITLES are found
 DIR=$(dirname "${BASH_SOURCE[0]}")
 RECIPIENT=$(cat "$DIR/whom_to_notify.txt")
 
@@ -9,26 +9,26 @@ notify() {
 # Don't attempt to notify anyone if a `whom_to_notify.txt` file is not present
         if [ -n "$RECIPIENT" ];
         then
-        filename=$1
-        echo "$filename"
+        FILENAME=$1
+        echo "$FILENAME"
         osascript -e 'tell application "Messages" to send "'"$1"' is done converting." to buddy "'"$RECIPIENT"'"'
         fi
 }
 
-
-# Cleans up original if already encoded
 cleanup(){
-        arguments="-fv"
-        $move_command $arguments "$1" ~/.Trash/
+    echo "Moving ${1} to Trash."
+    ARGUMENTS="-fv"
+    $MOVE_COMMAND $ARGUMENTS "$1" ~/.Trash/
 }
 
-# Takes a filename (mp4 file)
+
+import(){
+    # Takes a filename (mp4 file)
 #    imports it into TV.app using the `open` command
 #    Assumes TV.app is the default file type for MP4 files
 #    waits 2 seconds for the import to complete
 #    Then pauses TV.app which will start playing by default
 #    NOTE: This is only meant to work when TV>>Preferences>>Files>>'Copy files to Media folder when adding to Library' is NOT checked. If this is checked then you'll want to increase the sleep period appropriate for your system's speed
-import(){
     echo "Importing '$1' into TV"
     open "$1"
     sleep 2
@@ -42,124 +42,119 @@ end tell' > /dev/null 2>&1
 
 # Moves MP4 file passed into this script to target dir
 move_file(){
-    filename="$1"
-    new_filename="$2"
-    echo "here: $new_filename"
+    FILENAME="$1"
+    NEW_FILENAME="$2"
+    echo "here: $NEW_FILENAME"
 
-    $move_command "$filename" "$new_filename"
-    if [ -f "$new_filename" ]
+    $MOVE_COMMAND "$FILENAME" "$NEW_FILENAME"
+    if [ -f "$NEW_FILENAME" ]
     then
-        import "$new_filename"
-        cleanup "$filename"
+        import "$NEW_FILENAME"
+        cleanup "$FILENAME"
     else
-        echo "Failed moving $new_filename :("
+        echo "Failed moving $NEW_FILENAME :("
     fi
+}
+
+run() {
+    echo "Encoding $2"
+    if [ -n "$3" ] && [ -n "$4" ] # We have subtitles
+    then
+        $HANDBRAKE_CMD -i "$1" -o "$2" -e x264 --aencoder copy:aac --srt-file "$3" --srt-lang "$4" #1> /dev/null 2>&1
+    else
+        $HANDBRAKE_CMD -i "$1" -o "$2" -e x264 --aencoder copy:aac #1> /dev/null 2>&1
+    fi
+}
+
+get_subtitle_files() {
+    # Get the names of the SUBTITLES from the names of the files
+    SUBS=()
+    for SRT in ${1}; do
+        SUBS+=( "$SRT" )
+    done
+    SUB_STR=$(IFS=, ; echo "${SUBS[*]}")
+}
+
+get_subtitle_langs() {
+    # Get the names of the SUBTITLES from the names of the files
+    LANGS=()
+    for SRT in ${1}; do
+        # Assumes the subtitle file is named the language of the SUBTITLES
+        LANG=$(echo "${SRT}" | tr '/' '.' | awk -F'.' '{print $(NF-1)}')
+        LANGS+=( "$LANG" )
+    done
+    LANG_STR=$(IFS=, ; echo "${LANGS[*]}")
 }
 
 # Encodes Non MP4 file passed into this script into    mp4
 encode_file(){
-    echo ""
     if [ -z "$1" ]
     then
-        echo "You must provide a filename to encode_file()"
+        echo "You must provide a filename argument to encode_file()"
         exit 1
     fi
 
-    trailing_slash=$(echo "$directory" | grep -E "/$")
-    if [ -z "$trailing_slash" ]
+    FILENAME="${1}"
+    TRAILING_SLASH=$(echo "$DIRECTORY" | grep -E "/$")
+    if [ -z "$TRAILING_SLASH" ]
     then
-        directory="$directory/"
+        DIRECTORY="$DIRECTORY/"
     fi
 
-    # strip the directory, leaving just the filename
-    short_file="$(basename "$1")"
+    # strip the DIRECTORY, leaving just the FILENAME
+    SHORT_FILE="$(basename "$FILENAME")"
 
     # strip extension and replace with mp4
-    short_file="${short_file%.*}.mp4"
+    SHORT_FILE="${SHORT_FILE%.*}.mp4"
 
-    new_filename="$directory$short_file"
-    echo "new: $new_filename"
+    NEW_FILENAME="$DIRECTORY$SHORT_FILE"
 
-    if [ -f "$new_filename" ]
+    if [ -f "$NEW_FILENAME" ]
     then
-        echo "$new_filename already exists. Removing original."
+        echo "$NEW_FILENAME already exists. Exiting..."
+        exit
+    fi
+
+    IFS=$'\n'
+    SUBTITLES=$(find "$(dirname "$FILENAME")" -name "*.srt" )
+
+    if [ -n "$SUBTITLES" ]
+    then
+        get_subtitle_files "$SUBTITLES"
+        get_subtitle_langs "$SUBTITLES"
+    fi
+
+    run "$FILENAME" "$NEW_FILENAME" "$SUB_STR" "$LANG_STR"
+
+    if [ $? == 0 ]  && [ -f "$NEW_FILENAME" ]
+    then
+        import "$NEW_FILENAME"
+        notify "$SHORT_FILE"
         cleanup "$1"
+        sleep 5
     else
-        echo "$1"
-        IFS=$'\n'
-        subtitles=$(find "$(dirname "$1")" -name "*.srt" | paste -sd "," - )
-
-        # if this is already an mp4 and we don't have subtitles, then just move the file
-        is_mp4=$(echo "$filename" | grep -iE '/*mp4$')
-        is_mkv=$(echo "$filename" | grep -iE '/*mkv$')
-        if [ -n "$is_mp4" ] && [ -z "$subtitles" ]
-        then
-            move_file "$filename" "$new_filename"
-        else # Otherwise let's encode it and include the subtitles
-            echo "Encoding $new_filename"
-
-            # -e: Video encoder x264
-            # -q: Video quality. 22 seems to be typical
-            # -B: Audio Bitrate
-            # -E: pass through audio
-            if [ -n "$is_mkv" ]
-            then
-                # MKV files tend to have bad audio
-                arguments="-e x264 --gain 13"
-            else
-                arguments="-e x264 --aencoder copy:aac"
-            fi
-            if [ -n "$subtitles" ]
-            then
-                # Get the names of the subtitles from the names of the files
-                for srt in $(find "$(dirname "$1")" -name "*.srt"); do
-                    # Assumes the subtitle file is named the language of the subtitles
-                    lang=$(echo "${srt}" | tr '/' '.' | awk -F'.' '{print $(NF-1)}')
-                    if [ -z "${langs}" ]; then
-                        langs="${lang}"
-                    else
-                        langs="${langs},${lang}"
-                        echo "LANGS: ${langs}"
-                    fi
-                done
-                $handbrake -i "${1}" -o "${new_filename}" -e x264 --aencoder copy:aac --srt-file "${subtitles}" --srt-lang "${langs}" #1> /dev/null 2>&1
-            else
-                $handbrake -i "${1}" -o "${new_filename}" "${arguments}" #1> /dev/null 2>&1
-            fi
-            exit 1
-
-            # Check that handbrake didn't return an error and the newfile exists
-            if [ $? == 0 ]  && [ -f "$new_filename" ]
-            then
-                import "$new_filename"
-                notify "$short_file"
-                cleanup "$1"
-                sleep 5
-            else
-                echo "Failed encoding $new_filename :(" >&2
-                exit 1
-            fi
-        fi
+        echo "Failed encoding $NEW_FILENAME :(" >&2
+        exit 1
     fi
 }
 
-handbrake=$(which HandBrakeCLI)
-if [ ! -f "$handbrake" ]
+HANDBRAKE_CMD=$(which HandBrakeCLI)
+if [ ! -f "$HANDBRAKE_CMD" ]
 then
     echo "No HandBrakeCLI command found"
     exit 1
 fi
 
-move_command=$(which mv)
-if [ ! -f "$move_command" ]
+MOVE_COMMAND=$(which mv)
+if [ ! -f "$MOVE_COMMAND" ]
 then
     echo "No mv command found"
     exit 1
 fi
 
 # The file to re-encode
-filename=$1
-directory=$2
+FILENAME=$1
+DIRECTORY=$2
 
 usage() {
     echo "$0 [Video File] [Destination Folder]"
@@ -171,12 +166,12 @@ then
     usage
 fi
 
-is_sample=$(echo "$filename" | grep -i 'sample')
+IS_SAMPLE=$(echo "$FILENAME" | grep -i 'sample')
 
-if [ -n "$is_sample" ]
+if [ -n "$IS_SAMPLE" ]
 then
-    echo "Skipping sample file: $filename"
+    echo "Skipping sample file: $FILENAME"
 else
-    encode_file "$filename"
+    encode_file "$FILENAME"
 fi
 
