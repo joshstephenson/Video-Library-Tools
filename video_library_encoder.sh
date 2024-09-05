@@ -45,8 +45,9 @@ fi
 
 # Find video files in the directory passed via command line.
 # For each file, encode it
-while [ "$(find -s "$source_dir" \( -name "*mp4" -o -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) | wc -l)" -gt 0 ]
-do
-    first=$(find -s "$source_dir" \( -name "*mp4" -o -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) | head -1)
-    $encode "$first" "$target_dir"
-done
+#while [ "$(find -s "$source_dir" \( -name "*mp4" -o -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) | wc -l)" -gt 0 ]
+#do
+#first=$(find -s "$source_dir" \( -name "*mp4" -o -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) | head -1)
+find -s "$source_dir" \( -name "*mp4" -o -name "*avi" -o -name "*mkv" -o -name "*m4v" -o -name "*mpeg" -o -name "*divx" \) \
+    -exec "$encode" {} "$target_dir" \;
+#done
