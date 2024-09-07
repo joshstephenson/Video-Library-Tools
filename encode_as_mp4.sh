@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Change this to true if you only want to mv files that are already mp4 files
-# Leaving this as false will re-encode them when SUBTITLES are found
+
+GAIN=12
 DIR=$(dirname "${BASH_SOURCE[0]}")
 RECIPIENT=$(cat "$DIR/whom_to_notify.txt")
 
@@ -60,14 +60,13 @@ run() {
     echo "Encoding $2"
     if [ -n "$3" ] && [ -n "$4" ] # We have subtitles
     then
-        $HANDBRAKE_CMD -i "$1" -o "$2" -e x264 --aencoder copy:aac --srt-file "$3" --srt-lang "$4" #1> /dev/null 2>&1
+        $HANDBRAKE_CMD -i "$1" -o "$2" -e x264 --gain $GAIN --srt-file "$3" --srt-lang "$4" #1> /dev/null 2>&1
     else
-        $HANDBRAKE_CMD -i "$1" -o "$2" -e x264 --aencoder copy:aac #1> /dev/null 2>&1
+        $HANDBRAKE_CMD -i "$1" -o "$2" -e x264 --gain $GAIN #1> /dev/null 2>&1
     fi
 }
 
 get_subtitle_files() {
-    # Get the names of the SUBTITLES from the names of the files
     SUBS=()
     for SRT in ${1}; do
         SUBS+=( "$SRT" )
@@ -124,9 +123,9 @@ encode_file(){
         get_subtitle_langs "$SUBTITLES"
     fi
 
-    run "$FILENAME" "$NEW_FILENAME" "$SUB_STR" "$LANG_STR"
 
-    if [ $? == 0 ]  && [ -f "$NEW_FILENAME" ]
+
+    if run "$FILENAME" "$NEW_FILENAME" "$SUB_STR" "$LANG_STR" && [ -f "$NEW_FILENAME" ]
     then
         import "$NEW_FILENAME"
         notify "$SHORT_FILE"
